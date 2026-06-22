@@ -1,30 +1,37 @@
 package it.itsbio.monitordata.device.entity;
 
+import it.itsbio.monitordata.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.ManyToOne;
 
 @Entity
-@Table(name = "device")
 public class Device {
 
-    public static enum Type{
-        ARDUINO,SMARTH_WATCH,SMART_PHONE
+    public static enum Type {
+        ARDUINO, SMARTH_WATCH, SMART_PHONE
     }
+
     @Id
-    @GeneratedValue()
+    @GeneratedValue
     private long id;
-    @Column(nullable = false)
+
     private String name;
-    @Column(unique = true, nullable = false)
+
     private String code;
 
     @Enumerated(EnumType.STRING)
     private Type type;
+
+    @ManyToOne(targetEntity = User.class)
+    private User owner;
+
+    public Device() {
+    };
 
     public long getId() {
         return id;
@@ -58,6 +65,14 @@ public class Device {
         this.type = type;
     }
 
+    public User getOwner() {
+        return owner;
+    }
+
+    public void setOwner(User owner) {
+        this.owner = owner;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -85,5 +100,4 @@ public class Device {
         return "Device [id=" + id + ", name=" + name + ", code=" + code + ", type=" + type + "]";
     }
 
-    
 }
