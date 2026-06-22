@@ -1,5 +1,6 @@
 package it.itsbio.monitordata.device.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -12,14 +13,13 @@ import jakarta.persistence.Table;
 public class Device {
 
     public static enum Type{
-        ARDUINO
+        ARDUINO,SMARTH_WATCH,SMART_PHONE
     }
     @Id
     @GeneratedValue()
     private long id;
-    
     private String name;
-    
+    @Column(unique = true, nullable = false)
     private String code;
 
     @Enumerated(EnumType.STRING)

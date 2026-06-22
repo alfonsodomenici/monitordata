@@ -1,4 +1,15 @@
 # monitordata
+web app per gestire device e dati
+backend:  java,quarkus,jakarta rest,cdi,
+jakarta persistence JPA (Hibernate)
+frontend: html,css,javascript,vue,primevue
+
+## Device domain model
+id(key),name,code (univoco),type, owner_id
+
+## User domain model
+id(key),fullname,username
+
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
