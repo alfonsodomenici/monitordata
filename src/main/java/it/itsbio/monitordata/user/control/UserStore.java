@@ -42,6 +42,7 @@ public class UserStore {
 
     }
 
+    @Transactional
     public User update(long id, UserUpdate userUpdate) {
         User result = em.find(User.class, id);
         result.updateFrom(userUpdate);
