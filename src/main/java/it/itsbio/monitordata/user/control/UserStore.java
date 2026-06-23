@@ -16,4 +16,8 @@ public class UserStore {
     public void create(User user){
         em.persist(user);
     }
+
+    public void remove(Long id){
+        em.remove(em.find(User.class,id));
+    }
 }
