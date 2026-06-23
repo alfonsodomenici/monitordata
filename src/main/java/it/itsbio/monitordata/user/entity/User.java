@@ -1,5 +1,6 @@
 package it.itsbio.monitordata.user.entity;
 
+import it.itsbio.monitordata.user.boundary.UserUpdate;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -54,6 +55,9 @@ public class User {
     @Override
     public String toString() {
         return "User [id=" + id + ", fullname=" + fullname + ", username=" + username + "]";
+    }
+    public void updateFrom(UserUpdate userUpdate) {
+        this.setFullname(userUpdate.fullname());
     }
 
     
