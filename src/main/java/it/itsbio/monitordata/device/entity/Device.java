@@ -1,5 +1,7 @@
 package it.itsbio.monitordata.device.entity;
 
+import it.itsbio.monitordata.device.boundary.DeviceCreate;
+import it.itsbio.monitordata.device.boundary.DeviceUpdate;
 import it.itsbio.monitordata.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -30,6 +32,15 @@ public class Device {
     @ManyToOne(targetEntity = User.class)
     private User owner;
 
+    public static Device from(DeviceCreate deviceCreate, User owner) {
+        Device device = new Device();
+        device.setName(deviceCreate.name());
+        device.setCode(deviceCreate.code());
+        device.setType(deviceCreate.type());
+        device.setOwner(owner);
+        return device;
+    }
+    
     public Device() {
     };
 
@@ -98,6 +109,12 @@ public class Device {
     @Override
     public String toString() {
         return "Device [id=" + id + ", name=" + name + ", code=" + code + ", type=" + type + "]";
+    }
+
+    public void updateFrom(DeviceUpdate deviceUpdate) {
+        this.setName(deviceUpdate.name());
+        this.setCode(deviceUpdate.code());
+        this.setType(deviceUpdate.type());
     }
 
 }
