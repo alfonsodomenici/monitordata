@@ -4,6 +4,7 @@ import java.util.List;
 
 import it.itsbio.monitordata.device.control.DeviceStore;
 import it.itsbio.monitordata.device.entity.Device;
+import it.itsbio.monitordata.devicedata.boundary.DeviceDataCreate;
 import it.itsbio.monitordata.devicedata.control.DeviceDataStore;
 import it.itsbio.monitordata.devicedata.entity.DeviceData;
 import it.itsbio.monitordata.user.boundary.UserUpdate;
