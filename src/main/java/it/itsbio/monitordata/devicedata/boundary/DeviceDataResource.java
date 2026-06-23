@@ -2,6 +2,7 @@ package it.itsbio.monitordata.devicedata.boundary;
 
 import java.util.List;
 
+import it.itsbio.monitordata.device.boundary.DeviceDataCreate;
 import it.itsbio.monitordata.device.control.DeviceStore;
 import it.itsbio.monitordata.devicedata.control.DeviceDataStore;
 import it.itsbio.monitordata.devicedata.entity.DeviceData;
@@ -19,7 +20,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
 @RequestScoped
-@Path("devices/{deviceId}/data")
+@Path("devicedata")
 public class DeviceDataResource {
     @Inject
     DeviceDataStore deviceDataStore;
@@ -27,17 +28,10 @@ public class DeviceDataResource {
     @Inject
     DeviceStore deviceStore;
 
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public DeviceData create(@PathParam("deviceId") long deviceId, DeviceDataCreate deviceDataCreate) {
-        var device = deviceStore.findById(deviceId).orElseThrow(() -> new NotFoundException());
-        return deviceDataStore.create(DeviceData.from(deviceDataCreate, device));
-    }
 
     @DELETE
     @Path("{id}")
-    public void remove(@PathParam("deviceId") long deviceId, @PathParam("id") long id) {
+    public void remove(@PathParam("id") long id) {
         deviceDataStore.findById(id).orElseThrow(() -> new NotFoundException());
         deviceDataStore.remove(id);
     }
@@ -45,22 +39,15 @@ public class DeviceDataResource {
     @GET
     @Path("{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public DeviceData findById(@PathParam("deviceId") long deviceId, @PathParam("id") long id) {
+    public DeviceData findById(@PathParam("id") long id) {
         return deviceDataStore.findById(id).orElseThrow(() -> new NotFoundException());
-    }
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public List<DeviceData> findByDeviceId(@PathParam("deviceId") long deviceId) {
-        deviceStore.findById(deviceId).orElseThrow(() -> new NotFoundException());
-        return deviceDataStore.findByDeviceId(deviceId);
     }
 
     @PUT
     @Path("{id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public DeviceData update(@PathParam("deviceId") long deviceId, @PathParam("id") long id, DeviceDataUpdate deviceDataUpdate) {
+    public DeviceData update(@PathParam("id") long id, DeviceDataUpdate deviceDataUpdate) {
         deviceDataStore.findById(id).orElseThrow(() -> new NotFoundException());
         return deviceDataStore.update(id, deviceDataUpdate);
     }

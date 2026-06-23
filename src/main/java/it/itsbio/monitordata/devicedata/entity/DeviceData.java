@@ -1,7 +1,7 @@
 package it.itsbio.monitordata.devicedata.entity;
 
+import it.itsbio.monitordata.device.boundary.DeviceDataCreate;
 import it.itsbio.monitordata.device.entity.Device;
-import it.itsbio.monitordata.devicedata.boundary.DeviceDataCreate;
 import it.itsbio.monitordata.devicedata.boundary.DeviceDataUpdate;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

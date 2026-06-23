@@ -4,6 +4,8 @@ import java.util.List;
 
 import it.itsbio.monitordata.device.control.DeviceStore;
 import it.itsbio.monitordata.device.entity.Device;
+import it.itsbio.monitordata.devicedata.control.DeviceDataStore;
+import it.itsbio.monitordata.devicedata.entity.DeviceData;
 import it.itsbio.monitordata.user.boundary.UserUpdate;
 import it.itsbio.monitordata.user.control.UserStore;
 import jakarta.enterprise.context.RequestScoped;
@@ -22,11 +24,14 @@ import jakarta.ws.rs.core.MediaType;
 @RequestScoped
 @Path("devices")
 public class DevicesResource {
-   @Inject
+    @Inject
     DeviceStore deviceStore;
 
     @Inject
     UserStore userStore;
+
+    @Inject
+    DeviceDataStore deviceDataStore;
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -63,4 +68,22 @@ public class DevicesResource {
         deviceStore.findById(id).orElseThrow(() -> new NotFoundException());
         return deviceStore.update(id, deviceUpdate);
     }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("{deviceId}/data")
+    public DeviceData createData(@PathParam("deviceId") long deviceId, DeviceDataCreate deviceDataCreate) {
+        var device = deviceStore.findById(deviceId).orElseThrow(() -> new NotFoundException());
+        return deviceDataStore.create(DeviceData.from(deviceDataCreate, device));
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("{deviceId}/data")
+    public List<DeviceData> findDataByDeviceId(@PathParam("deviceId") long deviceId) {
+        deviceStore.findById(deviceId).orElseThrow(() -> new NotFoundException());
+        return deviceDataStore.findByDeviceId(deviceId);
+    }   
+
 }
