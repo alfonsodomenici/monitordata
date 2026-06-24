@@ -2,6 +2,9 @@ package it.itsbio.monitordata.user.boundary;
 
 import java.util.List;
 
+import it.itsbio.monitordata.device.boundary.DeviceCreate;
+import it.itsbio.monitordata.device.control.DeviceStore;
+import it.itsbio.monitordata.device.entity.Device;
 import it.itsbio.monitordata.user.control.UserStore;
 import it.itsbio.monitordata.user.entity.User;
 import jakarta.enterprise.context.RequestScoped;
@@ -23,6 +26,8 @@ public class UsersResource {
 
     @Inject
     UserStore userStore;
+    @Inject
+    DeviceStore deviceStore;
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -56,7 +61,22 @@ public class UsersResource {
     @Produces(MediaType.APPLICATION_JSON)
     public User update(@PathParam("id") long id, UserUpdate userUpdate) {
         userStore.findById(id).orElseThrow(() -> new NotFoundException());
-        return userStore.update(id,userUpdate);
+        return userStore.update(id, userUpdate);
     }
 
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("{idUser}/devices")
+    public Device createDevice(@PathParam("idUser") long idUser, DeviceCreate deviceCreate) {
+        var owner = userStore.findById(idUser).orElseThrow(() -> new NotFoundException());
+        return deviceStore.create(Device.from(deviceCreate, owner));
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("{idUser}/devices")
+    public List<Device> findDevices(@PathParam("idUser") long idUser) {
+        return deviceStore.findByUserId(idUser);
+    }
 }

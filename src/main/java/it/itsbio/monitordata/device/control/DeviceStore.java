@@ -47,4 +47,11 @@ public class DeviceStore {
         result.updateFrom(deviceUpdate);
         return em.merge(result);
     }
+
+    public List<Device> findByUserId(long idUser) {
+        return em.createQuery("select e from Device e where e.owner.id = :idUser order by e.name",
+         Device.class)
+                .setParameter("idUser", idUser)
+                .getResultList();
+    }
 }

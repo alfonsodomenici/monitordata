@@ -34,13 +34,7 @@ public class DevicesResource {
     @Inject
     DeviceDataStore deviceDataStore;
 
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Device create(DeviceCreate device) {
-        var owner = userStore.findById(device.ownerId()).orElseThrow(() -> new NotFoundException());
-        return deviceStore.create(Device.from(device, owner));
-    }
+
 
     @DELETE
     @Path("{id}")
