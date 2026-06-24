@@ -23,7 +23,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
 @RequestScoped
-@Path("devices")
+@Path("/devices")
 public class DevicesResource {
     @Inject
     DeviceStore deviceStore;
@@ -50,7 +50,7 @@ public class DevicesResource {
     }
 
     @GET
-    @Path("{id}")
+    @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Device findById(@PathParam("id") long id) {
         return deviceStore.findById(id).orElseThrow(() -> new NotFoundException());
@@ -63,7 +63,7 @@ public class DevicesResource {
     }
 
     @PUT
-    @Path("{id}")
+    @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Device update(@PathParam("id") long id, DeviceUpdate deviceUpdate) {
         deviceStore.findById(id).orElseThrow(() -> new NotFoundException());
@@ -73,7 +73,7 @@ public class DevicesResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("{deviceId}/data")
+    @Path("/{deviceId}/data")
     public DeviceData createData(@PathParam("deviceId") long deviceId, DeviceDataCreate deviceDataCreate) {
         var device = deviceStore.findById(deviceId).orElseThrow(() -> new NotFoundException());
         return deviceDataStore.create(DeviceData.from(deviceDataCreate, device));

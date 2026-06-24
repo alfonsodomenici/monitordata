@@ -18,5 +18,7 @@ public interface DeviceDataApiClient {
 
     @POST
     @Path("/{deviceId}/data")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     DeviceData sendData(@PathParam("deviceId") long deviceId, DeviceDataCreate payload);
 }

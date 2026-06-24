@@ -28,7 +28,6 @@ public class DeviceDataSimulator {
             String value = randomValueFor(dataType);
 
             DeviceDataCreate payload = new DeviceDataCreate(
-                    deviceId,
                     dataType,
                     value,
                     LocalDateTime.now(),
