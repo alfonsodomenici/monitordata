@@ -28,6 +28,7 @@ const deviceDialogVisible = ref(false)
 const deviceDialogMode = ref('create')
 const deviceForm = ref({ id: null, ownerId: null, name: '', code: '', type: 'ARDUINO' })
 const selectedDeviceId = ref(null)
+const selectedDataType = ref(null)
 const selectedDeviceData = ref([])
 
 const deviceTypes = ['ARDUINO', 'SMARTH_WATCH', 'SMART_PHONE']
@@ -125,8 +126,22 @@ const ownerChartData = computed(() => {
 
 const selectedDevice = computed(() => devices.value.find((device) => device.id === selectedDeviceId.value) || null)
 
+const dataTypeOptions = computed(() => {
+  const values = [...new Set(selectedDeviceData.value.map((entry) => entry.dataType).filter(Boolean))]
+  return values.map((value) => ({ label: value, value }))
+})
+
+const filteredSelectedDeviceData = computed(() => {
+  if (!selectedDataType.value) {
+    return selectedDeviceData.value
+  }
+  return selectedDeviceData.value.filter((entry) => entry.dataType === selectedDataType.value)
+})
+
 const deviceDataTrendChart = computed(() => {
-  const sorted = [...selectedDeviceData.value].sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)))
+  const sorted = [...filteredSelectedDeviceData.value].sort((a, b) =>
+    String(a.timestamp).localeCompare(String(b.timestamp)),
+  )
 
   const points = sorted
     .map((entry) => ({
@@ -137,12 +152,13 @@ const deviceDataTrendChart = computed(() => {
     .filter((point) => Number.isFinite(point.value))
 
   const unit = points[0]?.unit ? ` (${points[0].unit})` : ''
+  const suffix = selectedDataType.value ? ` - ${selectedDataType.value}` : ''
 
   return {
     labels: points.map((point) => point.label),
     datasets: [
       {
-        label: `Device Values${unit}`,
+        label: `Device Values${suffix}${unit}`,
         data: points.map((point) => point.value),
         borderColor: '#0d9488',
         backgroundColor: 'rgba(13, 148, 136, 0.2)',
@@ -207,12 +223,16 @@ async function refreshDevices() {
 async function refreshSelectedDeviceData() {
   if (!selectedDeviceId.value) {
     selectedDeviceData.value = []
+    selectedDataType.value = null
     return
   }
 
   loadingDeviceData.value = true
   try {
     selectedDeviceData.value = await apiRequest(`/devices/${selectedDeviceId.value}/data`)
+    if (!selectedDataType.value || !selectedDeviceData.value.some((entry) => entry.dataType === selectedDataType.value)) {
+      selectedDataType.value = selectedDeviceData.value[0]?.dataType || null
+    }
   } catch (error) {
     errorMessage.value = `Cannot load device data. ${error.message}`
   } finally {
@@ -356,6 +376,16 @@ async function removeDevice(device) {
 
 onMounted(refreshAll)
 watch(selectedDeviceId, refreshSelectedDeviceData)
+watch(dataTypeOptions, (options) => {
+  if (!options.length) {
+    selectedDataType.value = null
+    return
+  }
+
+  if (!options.some((option) => option.value === selectedDataType.value)) {
+    selectedDataType.value = options[0].value
+  }
+})
 </script>
 
 <template>
@@ -510,7 +540,7 @@ watch(selectedDeviceId, refreshSelectedDeviceData)
         <template #title>Selected Device Data</template>
         <template #subtitle>Visualize numeric telemetry values for one device.</template>
         <template #content>
-          <div class="mb-4 grid gap-2 md:grid-cols-[1fr_auto] md:items-end">
+          <div class="mb-4 grid gap-2 md:grid-cols-[1fr_1fr_auto] md:items-end">
             <div>
               <label class="mb-2 block text-sm font-medium text-slate-700" for="analytics-device">Device</label>
               <Dropdown
@@ -523,6 +553,21 @@ watch(selectedDeviceId, refreshSelectedDeviceData)
                 class="w-full"
               />
             </div>
+
+            <div>
+              <label class="mb-2 block text-sm font-medium text-slate-700" for="analytics-data-type">Data Type</label>
+              <Dropdown
+                id="analytics-data-type"
+                v-model="selectedDataType"
+                :options="dataTypeOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Select data type"
+                class="w-full"
+                :disabled="!selectedDeviceId"
+              />
+            </div>
+
             <Button
               label="Load Data"
               icon="pi pi-download"
@@ -534,13 +579,32 @@ watch(selectedDeviceId, refreshSelectedDeviceData)
 
           <p v-if="selectedDevice" class="mb-3 text-sm text-slate-600">
             Showing values for <strong>{{ selectedDevice.name }}</strong>
+            <span v-if="selectedDataType"> and <strong>{{ selectedDataType }}</strong></span>
           </p>
 
           <Message v-if="selectedDeviceId && !selectedDeviceData.length" severity="warn" :closable="false">
             No numeric data points available for this device yet.
           </Message>
 
-          <Chart v-if="selectedDeviceData.length" type="line" :data="deviceDataTrendChart" class="chart-size" />
+          <Message v-if="selectedDeviceData.length && !filteredSelectedDeviceData.length" severity="warn" :closable="false">
+            No entries available for the selected data type.
+          </Message>
+
+          <Chart v-if="filteredSelectedDeviceData.length" type="line" :data="deviceDataTrendChart" class="chart-size" />
+
+          <DataTable
+            v-if="filteredSelectedDeviceData.length"
+            :value="filteredSelectedDeviceData"
+            class="mt-4"
+            paginator
+            :rows="5"
+            responsiveLayout="scroll"
+          >
+            <Column field="timestamp" header="Timestamp" />
+            <Column field="dataType" header="Data Type" />
+            <Column field="value" header="Value" />
+            <Column field="unit" header="Unit" />
+          </DataTable>
         </template>
       </Card>
     </section>
