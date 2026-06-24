@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #132332;
+  --paper: #f7f8f5;
+  --accent: #0d9488;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 8% 20%, rgba(13, 148, 136, 0.18), transparent 35%),
+    radial-gradient(circle at 90% 12%, rgba(251, 191, 36, 0.22), transparent 32%),
+    linear-gradient(145deg, #f7f8f5, #edf3f5);
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.page-shell {
+  @apply mx-auto w-full max-w-7xl px-4 py-8 md:px-8 md:py-10;
+}
+
+.hero-panel {
+  @apply mb-6 flex flex-col gap-4 rounded-2xl border border-white/60 bg-white/70 p-6 shadow-lg backdrop-blur md:mb-8 md:flex-row md:items-start md:justify-between;
+}
+
+.hero-title-block h1 {
+  @apply m-0 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl;
+}
+
+.kicker {
+  @apply mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-700;
+}
+
+.hero-subtitle {
+  @apply mt-2 max-w-2xl text-sm text-slate-700 md:text-base;
+}
+
+.hero-actions {
+  @apply flex items-start;
+}
+
+.stats-grid {
+  @apply mb-6 grid grid-cols-1 gap-4 md:mb-8 md:grid-cols-2;
+}
+
+.stat-card .p-card-body {
+  @apply p-5;
+}
+
+.stat-label {
+  @apply m-0 text-xs font-semibold uppercase tracking-widest text-slate-500;
+}
+
+.stat-value {
+  @apply mt-2 text-4xl font-bold text-slate-900;
+}
+
+.workspace-grid {
+  @apply grid grid-cols-1 gap-5 lg:grid-cols-2;
+}
+
+.glass-card {
+  @apply border border-white/70 bg-white/75 shadow-xl backdrop-blur;
+}
+
+.dialog-grid {
+  @apply grid min-w-[320px] gap-3;
+}
+
+.dialog-grid label {
+  @apply text-sm font-medium text-slate-700;
+}
+
+.dialog-actions {
+  @apply mt-2 flex justify-end gap-2;
+}
+
+.p-card-title {
+  @apply text-xl font-semibold text-slate-900;
+}
+
+.p-card-subtitle {
+  @apply text-sm text-slate-600;
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+  @apply bg-slate-100 text-sm;
+}
+
+.p-tag {
+  @apply font-medium;
+}
