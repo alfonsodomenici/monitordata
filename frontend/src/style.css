@@ -85,6 +85,11 @@ body {
   @apply h-[320px];
 }
 
+.analytics-filters .p-dropdown,
+.analytics-filters .p-inputwrapper {
+  @apply w-full;
+}
+
 .glass-card {
   @apply border border-white/70 bg-white/75 shadow-xl backdrop-blur;
 }

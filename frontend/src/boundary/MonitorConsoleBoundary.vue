@@ -1,4 +1,5 @@
 <script setup>
+import { reactive } from 'vue'
 import Button from 'primevue/button'
 import Menubar from 'primevue/menubar'
 import Message from 'primevue/message'
@@ -10,7 +11,7 @@ import AnalyticsBoundary from './features/AnalyticsBoundary.vue'
 import UserDialogBoundary from './dialogs/UserDialogBoundary.vue'
 import DeviceDialogBoundary from './dialogs/DeviceDialogBoundary.vue'
 
-const control = useMonitorDataControl()
+const control = reactive(useMonitorDataControl())
 </script>
 
 <template>

@@ -1,11 +1,27 @@
 import { resolveRangeMs } from './time-range.entity'
 
+function normalizeTimestampString(value) {
+  const raw = String(value).trim().replace(' ', 'T')
+
+  // Normalize timezone offset like +0200 to +02:00 for wider Date parsing support.
+  const normalizedOffset = raw.replace(/([+-]\d{2})(\d{2})$/, '$1:$2')
+
+  // Trim fractional seconds to milliseconds because JS Date cannot reliably parse > 3 digits.
+  return normalizedOffset.replace(/\.(\d{3})\d+(?=(Z|[+-]\d{2}:\d{2})?$)/, '.$1')
+}
+
 export function parseTimestamp(timestamp) {
   if (!timestamp) {
     return null
   }
 
-  const parsed = new Date(timestamp)
+  if (typeof timestamp === 'number') {
+    const parsedNumber = new Date(timestamp)
+    return Number.isNaN(parsedNumber.getTime()) ? null : parsedNumber
+  }
+
+  const normalized = normalizeTimestampString(timestamp)
+  const parsed = new Date(normalized)
   return Number.isNaN(parsed.getTime()) ? null : parsed
 }
 
@@ -31,12 +47,24 @@ export function filterByTimeRange(deviceData, timeRangeValue) {
   })
 }
 
+function parseNumericValue(rawValue) {
+  if (rawValue == null) {
+    return Number.NaN
+  }
+
+  return Number(String(rawValue).replace(',', '.'))
+}
+
 export function toNumericTrendPoints(deviceData) {
   return [...deviceData]
-    .sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)))
+    .sort((a, b) => {
+      const first = parseTimestamp(a.timestamp)?.getTime() || 0
+      const second = parseTimestamp(b.timestamp)?.getTime() || 0
+      return first - second
+    })
     .map((entry) => ({
-      label: String(entry.timestamp || '').replace('T', ' ').slice(5, 16),
-      value: Number(entry.value),
+      label: String(entry.timestamp || '').replace('T', ' ').slice(0, 16),
+      value: parseNumericValue(entry.value),
       unit: entry.unit || '',
     }))
     .filter((point) => Number.isFinite(point.value))

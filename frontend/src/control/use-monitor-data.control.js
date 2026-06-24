@@ -351,7 +351,6 @@ export function useMonitorDataControl() {
     timeRangeOptions: TIME_RANGE_OPTIONS,
 
     refreshAll,
-    refreshSelectedDeviceData,
     openCreateUser,
     openEditUser,
     saveUser,

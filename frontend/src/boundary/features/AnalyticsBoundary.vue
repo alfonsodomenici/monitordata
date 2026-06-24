@@ -1,12 +1,10 @@
 <script setup>
-import Button from 'primevue/button'
 import Card from 'primevue/card'
 import Chart from 'primevue/chart'
 import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
 import Dropdown from 'primevue/dropdown'
 import Message from 'primevue/message'
-import SelectButton from 'primevue/selectbutton'
 
 defineProps({
   control: {
@@ -30,7 +28,7 @@ defineProps({
       <template #title>Selected Device Data</template>
       <template #subtitle>Visualize telemetry by device, data type, and time range.</template>
       <template #content>
-        <div class="mb-4 grid gap-2 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
+        <div class="analytics-filters mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3 xl:items-end">
           <div>
             <label class="mb-2 block text-sm font-medium text-slate-700" for="analytics-device">Device</label>
             <Dropdown
@@ -60,30 +58,25 @@ defineProps({
 
           <div>
             <label class="mb-2 block text-sm font-medium text-slate-700" for="analytics-range">Time Range</label>
-            <SelectButton
+            <Dropdown
               id="analytics-range"
               v-model="control.selectedTimeRange"
               :options="control.timeRangeOptions"
               optionLabel="label"
               optionValue="value"
-              :allowEmpty="false"
+              placeholder="Select time range"
               class="w-full"
             />
           </div>
 
-          <Button
-            label="Load Data"
-            icon="pi pi-download"
-            outlined
-            :loading="control.loadingDeviceData"
-            @click="control.refreshSelectedDeviceData"
-          />
         </div>
 
         <p v-if="control.selectedDevice" class="mb-3 text-sm text-slate-600">
           Showing values for <strong>{{ control.selectedDevice.name }}</strong>
           <span v-if="control.selectedDataType"> and <strong>{{ control.selectedDataType }}</strong></span>
         </p>
+
+        <Message v-if="control.loadingDeviceData" severity="info" :closable="false">Loading device data...</Message>
 
         <Message v-if="control.selectedDeviceId && !control.selectedDeviceData.length" severity="warn" :closable="false">
           No numeric data points available for this device yet.
