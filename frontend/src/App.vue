@@ -1,12 +1,14 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
+import Chart from 'primevue/chart'
 import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
 import Dialog from 'primevue/dialog'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
+import Menubar from 'primevue/menubar'
 import Message from 'primevue/message'
 import Tag from 'primevue/tag'
 
@@ -14,7 +16,9 @@ const users = ref([])
 const devices = ref([])
 const loadingUsers = ref(false)
 const loadingDevices = ref(false)
+const loadingDeviceData = ref(false)
 const errorMessage = ref('')
+const activeView = ref('dashboard')
 
 const userDialogVisible = ref(false)
 const userDialogMode = ref('create')
@@ -23,6 +27,8 @@ const userForm = ref({ id: null, fullname: '', username: '' })
 const deviceDialogVisible = ref(false)
 const deviceDialogMode = ref('create')
 const deviceForm = ref({ id: null, ownerId: null, name: '', code: '', type: 'ARDUINO' })
+const selectedDeviceId = ref(null)
+const selectedDeviceData = ref([])
 
 const deviceTypes = ['ARDUINO', 'SMARTH_WATCH', 'SMART_PHONE']
 
@@ -32,6 +38,120 @@ const ownerOptions = computed(() =>
     value: user.id,
   })),
 )
+
+const deviceOptions = computed(() =>
+  devices.value.map((device) => ({
+    label: `${device.name} (${device.code})`,
+    value: device.id,
+  })),
+)
+
+const menuItems = [
+  {
+    label: 'Dashboard',
+    icon: 'pi pi-th-large',
+    command: () => {
+      activeView.value = 'dashboard'
+    },
+  },
+  {
+    label: 'Users',
+    icon: 'pi pi-users',
+    command: () => {
+      activeView.value = 'users'
+    },
+  },
+  {
+    label: 'Devices',
+    icon: 'pi pi-mobile',
+    command: () => {
+      activeView.value = 'devices'
+    },
+  },
+  {
+    label: 'Analytics',
+    icon: 'pi pi-chart-bar',
+    command: () => {
+      activeView.value = 'analytics'
+    },
+  },
+]
+
+const typeChartData = computed(() => {
+  const typeCounts = deviceTypes.reduce((acc, type) => {
+    acc[type] = 0
+    return acc
+  }, {})
+
+  devices.value.forEach((device) => {
+    typeCounts[device.type] = (typeCounts[device.type] || 0) + 1
+  })
+
+  return {
+    labels: Object.keys(typeCounts),
+    datasets: [
+      {
+        label: 'Devices by Type',
+        backgroundColor: ['#0d9488', '#2563eb', '#f59e0b'],
+        borderColor: ['#0f766e', '#1d4ed8', '#d97706'],
+        borderWidth: 1,
+        data: Object.values(typeCounts),
+      },
+    ],
+  }
+})
+
+const ownerChartData = computed(() => {
+  const ownerCounts = {}
+  devices.value.forEach((device) => {
+    const ownerName = device.owner?.fullname || 'Unknown'
+    ownerCounts[ownerName] = (ownerCounts[ownerName] || 0) + 1
+  })
+
+  const labels = Object.keys(ownerCounts)
+  const values = Object.values(ownerCounts)
+  const palette = ['#0d9488', '#0369a1', '#1d4ed8', '#6d28d9', '#b45309', '#be123c']
+
+  return {
+    labels,
+    datasets: [
+      {
+        data: values,
+        backgroundColor: labels.map((_, index) => palette[index % palette.length]),
+      },
+    ],
+  }
+})
+
+const selectedDevice = computed(() => devices.value.find((device) => device.id === selectedDeviceId.value) || null)
+
+const deviceDataTrendChart = computed(() => {
+  const sorted = [...selectedDeviceData.value].sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)))
+
+  const points = sorted
+    .map((entry) => ({
+      label: String(entry.timestamp || '').replace('T', ' ').slice(5, 16),
+      value: Number(entry.value),
+      unit: entry.unit || '',
+    }))
+    .filter((point) => Number.isFinite(point.value))
+
+  const unit = points[0]?.unit ? ` (${points[0].unit})` : ''
+
+  return {
+    labels: points.map((point) => point.label),
+    datasets: [
+      {
+        label: `Device Values${unit}`,
+        data: points.map((point) => point.value),
+        borderColor: '#0d9488',
+        backgroundColor: 'rgba(13, 148, 136, 0.2)',
+        tension: 0.35,
+        fill: true,
+      },
+    ],
+  }
+})
 
 async function apiRequest(path, options = {}) {
   const merged = {
@@ -75,8 +195,28 @@ async function refreshDevices() {
   loadingDevices.value = true
   try {
     devices.value = await apiRequest('/devices')
+    if (selectedDeviceId.value && !devices.value.some((device) => device.id === selectedDeviceId.value)) {
+      selectedDeviceId.value = null
+      selectedDeviceData.value = []
+    }
   } finally {
     loadingDevices.value = false
+  }
+}
+
+async function refreshSelectedDeviceData() {
+  if (!selectedDeviceId.value) {
+    selectedDeviceData.value = []
+    return
+  }
+
+  loadingDeviceData.value = true
+  try {
+    selectedDeviceData.value = await apiRequest(`/devices/${selectedDeviceId.value}/data`)
+  } catch (error) {
+    errorMessage.value = `Cannot load device data. ${error.message}`
+  } finally {
+    loadingDeviceData.value = false
   }
 }
 
@@ -84,6 +224,7 @@ async function refreshAll() {
   errorMessage.value = ''
   try {
     await Promise.all([refreshUsers(), refreshDevices()])
+    await refreshSelectedDeviceData()
   } catch (error) {
     errorMessage.value = `Cannot load data. ${error.message}`
   }
@@ -214,6 +355,7 @@ async function removeDevice(device) {
 }
 
 onMounted(refreshAll)
+watch(selectedDeviceId, refreshSelectedDeviceData)
 </script>
 
 <template>
@@ -231,9 +373,15 @@ onMounted(refreshAll)
       </div>
     </section>
 
+    <Menubar :model="menuItems" class="menu-surface">
+      <template #end>
+        <Button label="Refresh" icon="pi pi-refresh" size="small" outlined @click="refreshAll" />
+      </template>
+    </Menubar>
+
     <Message v-if="errorMessage" severity="error" :closable="false">{{ errorMessage }}</Message>
 
-    <section class="stats-grid">
+    <section v-if="activeView === 'dashboard'" class="stats-grid">
       <Card class="glass-card stat-card">
         <template #content>
           <p class="stat-label">Users</p>
@@ -248,7 +396,25 @@ onMounted(refreshAll)
       </Card>
     </section>
 
-    <section class="workspace-grid">
+    <section v-if="activeView === 'dashboard'" class="workspace-grid">
+      <Card class="glass-card">
+        <template #title>Devices by Type</template>
+        <template #subtitle>Distribution of device categories in the platform.</template>
+        <template #content>
+          <Chart type="bar" :data="typeChartData" class="chart-size" />
+        </template>
+      </Card>
+
+      <Card class="glass-card">
+        <template #title>Devices per User</template>
+        <template #subtitle>Ownership split across registered users.</template>
+        <template #content>
+          <Chart type="doughnut" :data="ownerChartData" class="chart-size" />
+        </template>
+      </Card>
+    </section>
+
+    <section v-if="activeView === 'users'" class="workspace-grid single-panel">
       <Card class="glass-card">
         <template #title>Users</template>
         <template #subtitle>Create, update, and remove application users.</template>
@@ -278,6 +444,10 @@ onMounted(refreshAll)
           </DataTable>
         </template>
       </Card>
+
+    </section>
+
+    <section v-if="activeView === 'devices'" class="workspace-grid single-panel">
 
       <Card class="glass-card">
         <template #title>Devices</template>
@@ -323,6 +493,54 @@ onMounted(refreshAll)
               </template>
             </Column>
           </DataTable>
+        </template>
+      </Card>
+    </section>
+
+    <section v-if="activeView === 'analytics'" class="workspace-grid">
+      <Card class="glass-card">
+        <template #title>Device Type Trendboard</template>
+        <template #subtitle>Instant overview of devices grouped by technical type.</template>
+        <template #content>
+          <Chart type="polarArea" :data="typeChartData" class="chart-size" />
+        </template>
+      </Card>
+
+      <Card class="glass-card">
+        <template #title>Selected Device Data</template>
+        <template #subtitle>Visualize numeric telemetry values for one device.</template>
+        <template #content>
+          <div class="mb-4 grid gap-2 md:grid-cols-[1fr_auto] md:items-end">
+            <div>
+              <label class="mb-2 block text-sm font-medium text-slate-700" for="analytics-device">Device</label>
+              <Dropdown
+                id="analytics-device"
+                v-model="selectedDeviceId"
+                :options="deviceOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Select a device"
+                class="w-full"
+              />
+            </div>
+            <Button
+              label="Load Data"
+              icon="pi pi-download"
+              outlined
+              :loading="loadingDeviceData"
+              @click="refreshSelectedDeviceData"
+            />
+          </div>
+
+          <p v-if="selectedDevice" class="mb-3 text-sm text-slate-600">
+            Showing values for <strong>{{ selectedDevice.name }}</strong>
+          </p>
+
+          <Message v-if="selectedDeviceId && !selectedDeviceData.length" severity="warn" :closable="false">
+            No numeric data points available for this device yet.
+          </Message>
+
+          <Chart v-if="selectedDeviceData.length" type="line" :data="deviceDataTrendChart" class="chart-size" />
         </template>
       </Card>
     </section>
