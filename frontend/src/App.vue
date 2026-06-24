@@ -10,6 +10,7 @@ import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 import Menubar from 'primevue/menubar'
 import Message from 'primevue/message'
+import SelectButton from 'primevue/selectbutton'
 import Tag from 'primevue/tag'
 
 const users = ref([])
@@ -29,6 +30,7 @@ const deviceDialogMode = ref('create')
 const deviceForm = ref({ id: null, ownerId: null, name: '', code: '', type: 'ARDUINO' })
 const selectedDeviceId = ref(null)
 const selectedDataType = ref(null)
+const selectedTimeRange = ref('24h')
 const selectedDeviceData = ref([])
 
 const deviceTypes = ['ARDUINO', 'SMARTH_WATCH', 'SMART_PHONE']
@@ -76,6 +78,12 @@ const menuItems = [
       activeView.value = 'analytics'
     },
   },
+]
+
+const timeRangeOptions = [
+  { label: 'Last 24h', value: '24h' },
+  { label: 'Last 7d', value: '7d' },
+  { label: 'Last 30d', value: '30d' },
 ]
 
 const typeChartData = computed(() => {
@@ -138,8 +146,33 @@ const filteredSelectedDeviceData = computed(() => {
   return selectedDeviceData.value.filter((entry) => entry.dataType === selectedDataType.value)
 })
 
+function timestampToDate(timestamp) {
+  if (!timestamp) {
+    return null
+  }
+
+  const parsed = new Date(timestamp)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+const rangeFilteredSelectedDeviceData = computed(() => {
+  const now = Date.now()
+  const rangeToMs = {
+    '24h': 24 * 60 * 60 * 1000,
+    '7d': 7 * 24 * 60 * 60 * 1000,
+    '30d': 30 * 24 * 60 * 60 * 1000,
+  }
+
+  const threshold = now - (rangeToMs[selectedTimeRange.value] || rangeToMs['24h'])
+
+  return filteredSelectedDeviceData.value.filter((entry) => {
+    const parsed = timestampToDate(entry.timestamp)
+    return parsed ? parsed.getTime() >= threshold : false
+  })
+})
+
 const deviceDataTrendChart = computed(() => {
-  const sorted = [...filteredSelectedDeviceData.value].sort((a, b) =>
+  const sorted = [...rangeFilteredSelectedDeviceData.value].sort((a, b) =>
     String(a.timestamp).localeCompare(String(b.timestamp)),
   )
 
@@ -568,6 +601,19 @@ watch(dataTypeOptions, (options) => {
               />
             </div>
 
+            <div>
+              <label class="mb-2 block text-sm font-medium text-slate-700" for="analytics-range">Time Range</label>
+              <SelectButton
+                id="analytics-range"
+                v-model="selectedTimeRange"
+                :options="timeRangeOptions"
+                optionLabel="label"
+                optionValue="value"
+                :allowEmpty="false"
+                class="w-full"
+              />
+            </div>
+
             <Button
               label="Load Data"
               icon="pi pi-download"
@@ -586,15 +632,27 @@ watch(dataTypeOptions, (options) => {
             No numeric data points available for this device yet.
           </Message>
 
-          <Message v-if="selectedDeviceData.length && !filteredSelectedDeviceData.length" severity="warn" :closable="false">
+          <Message
+            v-if="selectedDeviceData.length && !filteredSelectedDeviceData.length"
+            severity="warn"
+            :closable="false"
+          >
             No entries available for the selected data type.
           </Message>
 
-          <Chart v-if="filteredSelectedDeviceData.length" type="line" :data="deviceDataTrendChart" class="chart-size" />
+          <Message
+            v-if="filteredSelectedDeviceData.length && !rangeFilteredSelectedDeviceData.length"
+            severity="warn"
+            :closable="false"
+          >
+            No entries available in the selected time range.
+          </Message>
+
+          <Chart v-if="rangeFilteredSelectedDeviceData.length" type="line" :data="deviceDataTrendChart" class="chart-size" />
 
           <DataTable
-            v-if="filteredSelectedDeviceData.length"
-            :value="filteredSelectedDeviceData"
+            v-if="rangeFilteredSelectedDeviceData.length"
+            :value="rangeFilteredSelectedDeviceData"
             class="mt-4"
             paginator
             :rows="5"
